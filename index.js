@@ -55,10 +55,9 @@ async function main() {
       .then(result => result['data'])
       .then(result => result.city)
       .then(result => {
-        console.log(result);
         console.log(`------------------------------------`)
         console.log(`País (Sigla): ${result.country}`)
-        console.log(`Estado: ${result.state}`)
+        //console.log(`Estado: ${result.state}`)
         return result.coord
       })
       .then(result => {
