@@ -2,70 +2,62 @@ require('dotenv').config()
 
 const axios = require('axios')
 
-const readline = require('readline');
+const readline = require('readline')
 
 const scanf = readline.createInterface({
   input: process.stdin,
   output: process.stdout
-});
+})
 
 async function main() {
-
-  console.log(`------------------------------------`);
+  console.log(`------------------------------------`)
   console.log(`1 - Entrar no sistema`)
   console.log(`2 - Sair`)
-  console.log(`------------------------------------`);
+  console.log(`------------------------------------`)
 
-  scanf.question("", async function (op) {
-    console.clear();
+  scanf.question('', async function (op) {
+    console.clear()
     switch (op) {
-
       case '1':
-        console.log(`------------------------------------`);
-        console.log('Digite uma cidade:');
-        console.log(`------------------------------------`);
-        scanf.question("", async function (city) {
-          console.clear();
+        console.log(`------------------------------------`)
+        console.log('Digite uma cidade:')
+        console.log(`------------------------------------`)
+        scanf.question('', async function (city) {
+          console.clear()
 
           await LogLat(city).then(result => {
             return FeelsLike_Description(result)
           })
 
-          main();
+          main()
         })
-        break;
+        break
 
       case '2':
-        console.clear();
-        process.exit();
+        console.clear()
+        process.exit()
 
       default:
-        console.log(`Insira um valor valido!`);
-        console.clear();
-        main();
+        console.log(`Insira um valor valido!`)
+        console.clear()
+        main()
     }
   })
 
   async function LogLat(city) {
-
-    const { appid, units, cnt, language, url } = process.env
-    const end1 = `${url}?appid=${appid}&q=${city}&units=${units}&cnt=${cnt}&lang=${language}`
+    const { appid, url } = process.env
+    const end1 = `${url}?q=${city}&appid=${appid}`
     const resultado = await axios
       .get(end1)
       .then(result => result['data'])
-      .then(result => result.city)
       .then(result => {
         console.log(`------------------------------------`)
-        console.log(`País (Sigla): ${result.country}`)
-        //console.log(`Estado: ${result.state}`)
-        return result.coord
-      })
-      .then(result => {
-        console.log(`------------------------------------`)
+        console.log(`País (Sigla): ${result[0].country}`)
+        console.log(`Estado: ${result[0].state}`)
         console.log(`Cidade: ${city}`)
-        console.log(`Latitude: ${result.lat}`)
-        console.log(`Longitude: ${result.lon}`)
-        return [result.lat, result.lon]
+        console.log(`Latitude: ${result[0].lat}`)
+        console.log(`Longitude: ${result[0].lon}`)
+        return [result[0].lat, result[0].lon]
       })
     return resultado
   }
@@ -96,4 +88,4 @@ async function main() {
     return resultado
   }
 }
-main();
+main()
