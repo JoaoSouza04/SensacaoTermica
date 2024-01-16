@@ -1,91 +1,49 @@
 require('dotenv').config()
 
 const axios = require('axios')
+const express = require('express')
+const app = express()
 
-const readline = require('readline')
+require('dotenv').config()
 
-const scanf = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
+app.use(express.json())
+
+app.get('/api/weather/:location', async (req, res) => {
+  try {
+    const { api1_url, api2_url, appid, language } = process.env
+    const { location } = req.params
+
+    const weather_url = `${api1_url}?q=${location}&appid=${appid}&lang=${language}`
+    const weather = await axios.get(weather_url)
+    const { lat, lon, name, country, state } = weather.data[0]
+
+    const feelsLike_url = `${api2_url}?&lat=${lat}&lon=${lon}&appid=${appid}&lang=${language}`
+    const feelsLike = await axios.get(feelsLike_url)
+    const { description } = feelsLike.data.weather[0]
+    let { temp, feels_like } = feelsLike.data.main
+    temp -= 273
+    feels_like -= 273
+
+    const result = {
+      Nome: name,
+      País: country,
+      Estado: state,
+      Localização: {
+        Latitude: lat,
+        Longitude: lon
+      },
+      Temperatura: `${temp.toFixed(1)}°C`,
+      Sensação: `${feels_like.toFixed(1)}°C`,
+      Descrição: description
+    }
+
+    res.json(result)
+  } catch (e) {
+    console.error(e)
+    res.status(400).send(e.message)
+  }
 })
 
-async function main() {
-  console.log(`------------------------------------`)
-  console.log(`1 - Entrar no sistema`)
-  console.log(`2 - Sair`)
-  console.log(`------------------------------------`)
-
-  scanf.question('', async function (op) {
-    console.clear()
-    switch (op) {
-      case '1':
-        console.log(`------------------------------------`)
-        console.log('Digite uma cidade:')
-        console.log(`------------------------------------`)
-        scanf.question('', async function (city) {
-          console.clear()
-
-          await LogLat(city).then(result => {
-            return FeelsLike_Description(result)
-          })
-
-          main()
-        })
-        break
-
-      case '2':
-        console.clear()
-        process.exit()
-
-      default:
-        console.log(`Insira um valor valido!`)
-        console.clear()
-        main()
-    }
-  })
-
-  async function LogLat(city) {
-    const { appid, url } = process.env
-    const end1 = `${url}?q=${city}&appid=${appid}`
-    const resultado = await axios
-      .get(end1)
-      .then(result => result['data'])
-      .then(result => {
-        console.log(`------------------------------------`)
-        console.log(`País (Sigla): ${result[0].country}`)
-        console.log(`Estado: ${result[0].state}`)
-        console.log(`Cidade: ${city}`)
-        console.log(`Latitude: ${result[0].lat}`)
-        console.log(`Longitude: ${result[0].lon}`)
-        return [result[0].lat, result[0].lon]
-      })
-    return resultado
-  }
-
-  async function FeelsLike_Description(lista) {
-    const { appid, url2, language } = process.env
-    const end2 = `${url2}?&lat=${lista[0]}&lon=${lista[1]}&appid=${appid}&lang=${language}`
-    const resultado = await axios
-      .get(end2)
-      .then(result => result['data'])
-      .then(result => {
-        console.log(`------------------------------------`)
-        console.log(`Descrição: ${result.weather[0].description}`)
-        return result
-      })
-      .then(result => result.main)
-      .then(result => {
-        console.log(`------------------------------------`)
-        console.log(
-          `Sensação térmica (Kelvin): ${Math.round(result.feels_like)} k`
-        )
-        console.log(
-          `Sensação térmica (Celsius): ${Math.round(result.feels_like - 273)}°C`
-        )
-        console.log(`------------------------------------`)
-        return result.feels_like
-      })
-    return resultado
-  }
-}
-main()
+app.listen(process.env.PORT, () =>
+  console.log(`Server listening on port ${process.env.PORT}`)
+)
